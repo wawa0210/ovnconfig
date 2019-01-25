@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: demo-api
+spec:
+  replicas: 5
+  template:
+    metadata:
+      labels:
+       app: demo-api
+    spec:
+      containers:
+      - name: demo-api
+        image: registry.cn-hangzhou.aliyuncs.com/wawa0210/k8s_demo:1.0.2
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 3
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        resources:
+          limits:
+            cpu: 200m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: demo-api
+spec:
+ selector:
+  app: demo-api
+ ports:
+  - protocol: TCP
+    port: 80
+    nodePort: 30081
+ type: NodePort
